@@ -1,0 +1,46 @@
+User Story A
+As a cool programmer guy, I want to have an ability to find the biggest negative value from the provided list of numbers. It will allow me to make my manual calculation faster.
+
+Requirements:
+1. User Input:
+   - The program shall allow the user to input a list of numbers.
+   - The user shall be able to input the list of numbers via the console or a graphical user interface.
+
+2. Data Validation:
+   - The program should validate that the input consists of valid numerical values.
+   - The program should handle non-numeric inputs gracefully and prompt the user to re-enter the data.
+
+3. Processing:
+   - The program shall iterate through the list of numbers provided by the user.
+   - The program shall identify the negative numbers from the list.
+   - The program shall determine the largest (closest to zero) negative number from the list.
+
+4. Output:
+   - The program shall output the largest negative number found in the list.
+   - If there are no negative numbers in the list, the program shall inform the user that there are no negative numbers in the provided list.
+
+User Story B
+As a cool mathematician, I want to be able to get roots of the quadratic equation ax^2 + bx + c. It will allow me to avoid hard calculations related to determinant.
+
+Requirements:
+
+1. User Input:
+   - The program shall allow the user to input the coefficients \(a\), \(b\), and \(c\) of the quadratic equation.
+   - The user shall be able to input the coefficients via the console or a graphical user interface.
+
+2. Data Validation:
+   - The program should validate that the inputs for \(a\), \(b\), and \(c\) are valid numerical values.
+   - The program should handle non-numeric inputs gracefully and prompt the user to re-enter the data.
+
+3. Processing:
+   - The program shall calculate the determinant (discriminant) using the formula \( \Delta = b^2 - 4ac \).
+   - Based on the value of the determinant, the program shall:
+     - Determine two distinct real roots if the determinant is positive.
+     - Determine one real root if the determinant is zero.
+     - Determine that there are no real roots if the determinant is negative.
+
+4. Output:
+   - The program shall output the roots of the quadratic equation.
+   - If there are two real roots, the program shall display both roots.
+   - If there is one real root, the program shall display the single root.
+   - If there are no real roots, the program shall inform the user that the equation has no real roots.
