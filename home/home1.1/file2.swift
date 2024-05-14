@@ -1,18 +1,24 @@
 import Foundation
 
+// Looks good in general while we can just return [Double] instead of pair of optionals.
+// Then you will not need extra coomparison in the main program
 func solveQuadraticEquation(a: Double, b: Double, c: Double) -> (Double?, Double?) {
     let determinant = b * b - 4 * a * c
 
-    if determinant > 0 {
-        let root1 = (-b + sqrt(determinant)) / (2 * a)
-        let root2 = (-b - sqrt(determinant)) / (2 * a)
-        return (root1, root2)
-    } else if determinant == 0 {
-        let root = -b / (2 * a)
-        return (root, root)
-    } else {
+    // consider rearrangement like below - instead of if else if else if else we can sometimes increase readability with the following trick
+    if determinant < 0 {
         return (nil, nil)
     }
+    
+    if determinant == 0 {
+        let root = -b / (2 * a)
+        return (root, root)
+    }
+
+    // minor: sqrt of determinant may be cached to avoid duplicated calculations.
+    let root1 = (-b + sqrt(determinant)) / (2 * a)
+    let root2 = (-b - sqrt(determinant)) / (2 * a)
+    return (root1, root2)
 }
 
 func readDouble(prompt: String) -> Double {
