@@ -2,33 +2,78 @@
 #include <fstream>
 #include <unordered_map>
 #include <string>
+#include <format>
+#include <print>
 
-const std::string DATABASE_FILE = "user_data.txt";
+namespace {
+    constexpr const char* DATABASE_FILE = "user_data.txt";
+    constexpr const char* DELETE_COMMAND = "delete";
+    constexpr const char* BREAD_COMMAND = "bread";
+}
 
-void loadStatistics(std::unordered_map<std::string, int> &stats) {
-    std::ifstream file(DATABASE_FILE);
-    std::string name;
-    int count;
-    while (file >> name >> count) {
-        stats[name] = count;
+class UserHistory {
+public:
+    explicit UserHistory(const std::string& filename)
+        : filename_(filename) {
+        loadStatistics();
     }
-    file.close();
-}
 
-void saveStatistics(const std::unordered_map<std::string, int> &stats) {
-    std::ofstream file(DATABASE_FILE, std::ofstream::trunc);
-    for (const auto &pair : stats) {
-        file << pair.first << " " << pair.second << std::endl;
+    ~UserHistory() {
+        saveStatistics();
     }
-    file.close();
-}
 
-void clearStatistics() {
-    std::ofstream file(DATABASE_FILE, std::ofstream::trunc);
-    file.close();
-}
+    void loadStatistics() {
+        std::ifstream file(filename_);
+        std::string name;
+        int count;
+        while (file >> name >> count) {
+            stats_[name] = count;
+        }
+    }
 
-int main(int argc, char *argv[]) {
+    void saveStatistics() const {
+        std::ofstream file(filename_, std::ofstream::trunc);
+        for (const auto& pair : stats_) {
+            std::println(file, "{} {}", pair.first, pair.second);
+        }
+    }
+
+    void clearStatistics() {
+        stats_.clear();
+    }
+
+    bool hasUser(const std::string& name) const {
+        return stats_.find(name) != stats_.end();
+    }
+
+    void addUser(const std::string& name) {
+        stats_[name] = 1;
+    }
+
+    void incrementUserCount(const std::string& name) {
+        if (hasUser(name)) {
+            stats_[name]++;
+        }
+    }
+
+    void deleteUser(const std::string& name) {
+        stats_.erase(name);
+    }
+
+    int getUserCount(const std::string& name) const {
+        auto it = stats_.find(name);
+        if (it != stats_.end()) {
+            return it->second;
+        }
+        return 0;
+    }
+
+private:
+    std::string filename_;
+    std::unordered_map<std::string, int> stats_;
+};
+
+int main(int argc, char* argv[]) {
     if (argc < 2 || argc > 3) {
         std::cerr << "Usage: " << argv[0] << " <name> [delete]" << std::endl;
         return 1;
@@ -37,30 +82,27 @@ int main(int argc, char *argv[]) {
     std::string name = argv[1];
     std::string action = (argc == 3) ? argv[2] : "";
 
-    std::unordered_map<std::string, int> stats;
-    loadStatistics(stats);
+    UserHistory userHistory(DATABASE_FILE);
 
-    if (name == "bread") {
-        clearStatistics();
-        std::cout << "Welcome, bread!" << std::endl;
+    if (name == BREAD_COMMAND) {
+        userHistory.clearStatistics();
+        std::println("Welcome, bread!");
         return 0;
     }
 
-    if (action == "delete") {
-        stats.erase(name);
-        saveStatistics(stats);
-        std::cout << "Statistics for " << name << " have been reset." << std::endl;
+    if (action == DELETE_COMMAND) {
+        userHistory.deleteUser(name);
+        std::println("Statistics for {} have been reset.", name);
         return 0;
     }
 
-    if (stats.find(name) == stats.end()) {
-        std::cout << "Welcome, " << name << "!" << std::endl;
-        stats[name] = 1;
+    if (!userHistory.hasUser(name)) {
+        std::println("Welcome, {}!", name);
+        userHistory.addUser(name);
     } else {
-        stats[name]++;
-        std::cout << "Hello again(x=" << stats[name] << "), " << name << "!" << std::endl;
+        userHistory.incrementUserCount(name);
+        std::println("Hello again(x={}), {}!", userHistory.getUserCount(name), name);
     }
 
-    saveStatistics(stats);
     return 0;
 }

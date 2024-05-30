@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 if [ "$#" -lt 2 ]; then
     echo "Usage: $0 source_file -o output_binary"
@@ -7,5 +7,6 @@ fi
 
 COMPILER="clang++"
 FLAGS="-Wall -Wextra -Wpedantic -Werror -std=c++23"
+LDFLAGS="-stdlib=libc++ -lc++"
 
-$COMPILER $FLAGS "$@"
+$COMPILER $FLAGS "$@" $LDFLAGS
