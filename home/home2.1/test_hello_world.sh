@@ -1,6 +1,6 @@
 #!/bin/bash
 
-run_test() {
+check_output() {
     local expected_output="$1"
     shift
     local output=$(../../class/class2.1/HelloWorld "$@")
@@ -12,40 +12,40 @@ run_test() {
     fi
 }
 
-> user_data.txt
+touch user_data.txt
 
 # Test Case 1: First Run with a New Name
-run_test "Welcome, Alice!" "Alice"
-run_test "Hello again(x=2), Alice!" "Alice"
-run_test "Hello again(x=3), Alice!" "Alice"
-
 > user_data.txt
+check_output "Welcome, Alice!" "Alice"
+check_output "Hello again(x=2), Alice!" "Alice"
+check_output "Hello again(x=3), Alice!" "Alice"
 
 # Test Case 2: Handling of Multiple Names
-run_test "Welcome, Bob!" "Bob"
-run_test "Welcome, Alice!" "Alice"
-run_test "Hello again(x=2), Alice!" "Alice"
-run_test "Hello again(x=2), Bob!" "Bob"
-
 > user_data.txt
+check_output "Welcome, Bob!" "Bob"
+check_output "Welcome, Alice!" "Alice"
+check_output "Hello again(x=2), Alice!" "Alice"
+check_output "Hello again(x=2), Bob!" "Bob"
 
 # Test Case 3: Reset Statistics for a Given Name
-run_test "Welcome, Charlie!" "Charlie"
-run_test "Hello again(x=2), Charlie!" "Charlie"
-run_test "Statistics for Charlie have been reset." "Charlie" "delete"
-run_test "Welcome, Charlie!" "Charlie"
 > user_data.txt
+check_output "Welcome, Charlie!" "Charlie"
+check_output "Hello again(x=2), Charlie!" "Charlie"
+check_output "Statistics for Charlie have been reset." "Charlie" "delete"
+check_output "Welcome, Charlie!" "Charlie"
 
 # Test Case 4: Clear All History with Secret Word
-run_test "Welcome, David!" "David"
-run_test "Welcome, Eve!" "Eve"
-run_test "Welcome, bread!" "bread"
-run_test "Welcome, David!" "David"
-run_test "Welcome, Eve!" "Eve"
+> user_data.txt
+check_output "Welcome, David!" "David"
+check_output "Welcome, Eve!" "Eve"
+check_output "Welcome, bread!" "bread"
+check_output "Welcome, David!" "David"
+check_output "Welcome, Eve!" "Eve"
 
 # Test Case 5: Invalid Arguments Handling
-run_test "Usage: <program> <name> [delete]"
-run_test "Usage: <program> <name> [delete]" "Alice" "extra_argument"
-run_test "Usage: <program> <name> [delete]" "Frank" "invalid"
+> user_data.txt
+check_output "Usage: <program> <name> [delete]"
+check_output "Usage: <program> <name> [delete]" "Alice" "extra_argument"
+check_output "Usage: <program> <name> [delete]" "Frank" "invalid"
 
 echo "All tests passed."

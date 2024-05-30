@@ -1,22 +1,23 @@
-#include "Helpers.hpp"
 #include <algorithm>
-
-double dummyFunc(double x) {
-    return x > 0 ? x : 0;
-}
+#include <string>
+#include <vector>
+#include <ranges>
+#include <iterator>
 
 std::string repeatString(const std::vector<int>& vec, const std::string& str) {
     if (vec.empty()) {
         return "";
     }
 
-    int max_val = *std::max_element(vec.begin(), vec.end());
-    std::string result;
-    result.reserve(str.size() * max_val);
-
-    for (int i = 0; i < max_val; ++i) {
-        result += str;
+    int repeatCount = *std::max_element(vec.begin(), vec.end());
+    if (repeatCount <= 0) {
+        return "";
     }
+
+    auto repeatedView = std::views::repeat(str) | std::views::take(repeatCount) | std::views::join;
+
+    std::string result;
+    std::ranges::copy(repeatedView, std::back_inserter(result));
 
     return result;
 }
