@@ -10,61 +10,74 @@ struct Pixel {
     int r, g, b;
 };
 
-vector<vector<Pixel>> readImage(const string& filename) {
-    ifstream infile(filename);
-    if (!infile.is_open()) {
-        throw runtime_error("Unable to open input file.");
-    }
+const int pixel = 16;
 
-    vector<vector<Pixel>> image(16, vector<Pixel>(16));
-    string line;
-    for (int i = 0; i < 16; ++i) {
-        if (!getline(infile, line)) {
-            throw runtime_error("Input file does not have 16 lines.");
+class Image {
+public:
+    Image(int size) : image(size, vector<Pixel>(size)) {}
+
+    void read(const string& filename) {
+        ifstream infile(filename);
+        if (!infile.is_open()) {
+            throw runtime_error("Unable to open input file.");
         }
-        stringstream ss(line);
-        for (int j = 0; j < 16; ++j) {
-            if (!(ss >> image[i][j].r)) throw runtime_error("Invalid input format.");
-            if (ss.get() != ',') throw runtime_error("Invalid input format.");
-            if (!(ss >> image[i][j].g)) throw runtime_error("Invalid input format.");
-            if (ss.get() != ',') throw runtime_error("Invalid input format.");
-            if (!(ss >> image[i][j].b)) throw runtime_error("Invalid input format.");
-            if (ss.peek() == ' ') ss.get();
+
+        string line;
+        for (int i = 0; i < pixel; ++i) {
+            if (!getline(infile, line)) {
+                throw runtime_error("Input file does not have 16 lines.");
+            }
+            stringstream ss(line);
+            for (int j = 0; j < pixel; ++j) {
+                image[i][j] = parsePixel(ss);
+            }
         }
     }
 
-    return image;
-}
-
-void writeImage(const string& filename, const vector<vector<Pixel>>& image) {
-    ofstream outfile(filename);
-    if (!outfile.is_open()) {
-        throw runtime_error("Unable to open output file.");
-    }
-
-    for (const auto& row : image) {
-        for (size_t j = 0; j < row.size(); ++j) {
-            outfile << row[j].r << "," << row[j].g << "," << row[j].b;
-            if (j < row.size() - 1) outfile << " ";
-        }
-        outfile << "\n";
-    }
-}
-
-void processImage(vector<vector<Pixel>>& image, const Pixel& favoriteColor) {
-    for (int i = 0; i < 16; ++i) {
-        for (int j = 0; j < 16; ++j) {
-            if (image[i][j].r == favoriteColor.r && image[i][j].g == favoriteColor.g && image[i][j].b == favoriteColor.b) {
-                if (i > 0) {
-                    image[i-1][j] = favoriteColor;
-                }
-                if (j > 0) {
-                    image[i][j-1] = favoriteColor;
+    void process(const Pixel& favoriteColor) {
+        for (int i = 0; i < pixel; ++i) {
+            for (int j = 0; j < pixel; ++j) {
+                if (image[i][j].r == favoriteColor.r && image[i][j].g == favoriteColor.g && image[i][j].b == favoriteColor.b) {
+                    if (i > 0) {
+                        image[i-1][j] = favoriteColor;
+                    }
+                    if (j > 0) {
+                        image[i][j-1] = favoriteColor;
+                    }
                 }
             }
         }
     }
-}
+
+    void save(const string& filename) const {
+        ofstream outfile(filename);
+        if (!outfile.is_open()) {
+            throw runtime_error("Unable to open output file.");
+        }
+
+        for (const auto& row : image) {
+            for (size_t j = 0; j < row.size(); ++j) {
+                outfile << row[j].r << "," << row[j].g << "," << row[j].b;
+                if (j < row.size() - 1) outfile << " ";
+            }
+            outfile << "\n";
+        }
+    }
+
+private:
+    vector<vector<Pixel>> image;
+
+    Pixel parsePixel(stringstream& ss) {
+        Pixel pixel;
+        if (!(ss >> pixel.r)) throw runtime_error("Invalid input format.");
+        if (ss.get() != ',') throw runtime_error("Invalid input format.");
+        if (!(ss >> pixel.g)) throw runtime_error("Invalid input format.");
+        if (ss.get() != ',') throw runtime_error("Invalid input format.");
+        if (!(ss >> pixel.b)) throw runtime_error("Invalid input format.");
+        if (ss.peek() == ' ') ss.get();
+        return pixel;
+    }
+};
 
 int main(int argc, char* argv[]) {
     if (argc != 4) {
@@ -84,9 +97,10 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        auto image = readImage(inputFileName);
-        processImage(image, favoriteColor);
-        writeImage(outputFileName, image);
+        Image image(pixel);
+        image.read(inputFileName);
+        image.process(favoriteColor);
+        image.save(outputFileName);
     } catch (const exception& e) {
         cerr << "Error: " << e.what() << "\n";
         return 1;

@@ -23,8 +23,11 @@ void PizzaBuilder::add_ingredient(const std::string& ingredient) {
     }
 }
 
-Pizza PizzaBuilder::build() const {
-    return pizza;
+Pizza PizzaBuilder::build() {
+    Pizza new_pizza = pizza;
+    Pizza empty_pizza;
+    std::swap(pizza, empty_pizza);
+    return new_pizza;
 }
 
 std::map<std::string, double> PizzaBuilder::get_available_ingredients() const {

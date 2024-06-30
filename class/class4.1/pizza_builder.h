@@ -12,7 +12,7 @@ public:
     PizzaBuilder();
     void load_ingredients(const std::string& file_path);
     void add_ingredient(const std::string& ingredient);
-    Pizza build() const;
+    Pizza build();
     std::map<std::string, double> get_available_ingredients() const;
 
 private:
@@ -20,4 +20,4 @@ private:
     std::map<std::string, double> available_ingredients;
 };
 
-#endif
+#endif // PIZZA_BUILDER_H

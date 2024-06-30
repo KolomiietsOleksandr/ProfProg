@@ -1,5 +1,17 @@
 import Foundation
 
+class Pizza {
+    private var ingredients: [String: Double] = [:]
+
+    func addIngredient(_ ingredient: String, cost: Double) {
+        ingredients[ingredient] = cost
+    }
+
+    func getIngredients() -> [String: Double] {
+        return ingredients
+    }
+}
+
 class PizzaBuilder {
     private var pizza: Pizza
     private var availableIngredients: [String: Double]
@@ -8,6 +20,7 @@ class PizzaBuilder {
         "Pepperoni": ["Cheese": 1.50, "Pepperoni": 2.00],
         "Vegetarian": ["Cheese": 1.50, "Tomato": 0.50, "Mushroom": 1.00, "Onion": 0.75, "Olives": 1.25]
     ]
+
     init() {
         self.pizza = Pizza()
         self.availableIngredients = [
@@ -30,7 +43,9 @@ class PizzaBuilder {
     }
 
     func build() -> Pizza {
-        return pizza
+        let builtPizza = pizza
+        pizza = Pizza()
+        return builtPizza
     }
 
     func getAvailableIngredients() -> [String: Double] {
@@ -52,3 +67,4 @@ class PizzaBuilder {
         return nil
     }
 }
+

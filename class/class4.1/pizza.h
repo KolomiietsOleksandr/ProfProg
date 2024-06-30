@@ -7,7 +7,7 @@
 
 class Pizza {
 public:
-    void add_ingredient(const std::string& ingredient, double cost);
+    [[nodiscard]] void add_ingredient(const std::string& ingredient, double cost);
     std::vector<std::string> get_ingredients() const;
     double get_total_cost() const;
 
