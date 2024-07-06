@@ -36,7 +36,6 @@ public:
     double getBasePrice() const { return 5.0; }
 };
 
-
 int main() {
     PricePresenter<2> presenter;
 
