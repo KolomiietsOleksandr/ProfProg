@@ -122,7 +122,6 @@ class Tournament {
     }
 }
 
-// Main
 let tournament = Tournament()
 let teamNames = ["Team1", "Team2", "Team3", "russia"]
 for name in teamNames {

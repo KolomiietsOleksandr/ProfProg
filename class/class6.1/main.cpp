@@ -5,6 +5,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <queue>
 #include <random>
 
 struct GreenMessage {
@@ -26,6 +27,25 @@ struct OrangeMessage {
 
 class MessageDispatcher {
 public:
+    using GreenMessageCb = std::function<void(const GreenMessage&)>;
+    using BlueMessageCb = std::function<void(const BlueMessage&)>;
+    using OrangeMessageCb = std::function<void(const OrangeMessage&)>;
+
+    MessageDispatcher() {
+        dispatchThread = std::thread(&MessageDispatcher::dispatchOrangeMessages, this);
+    }
+
+    ~MessageDispatcher() {
+        {
+            std::unique_lock<std::mutex> lock(mtx);
+            stop = true;
+        }
+        cv.notify_all();
+        if (dispatchThread.joinable()) {
+            dispatchThread.join();
+        }
+    }
+
     void publishGreenMessage(const GreenMessage& msg) {
         std::unique_lock<std::mutex> lock(mtx);
         for (auto& subscriber : greenSubscribers) {
@@ -41,33 +61,57 @@ public:
     }
 
     void publishOrangeMessage(const OrangeMessage& msg) {
-        std::unique_lock<std::mutex> lock(mtx);
-        for (auto& subscriber : orangeSubscribers) {
-            subscriber(msg);
+        {
+            std::unique_lock<std::mutex> lock(mtx);
+            orangeMessageQueue.push(msg);
         }
+        cv.notify_one();
     }
 
-    void subscribeToGreenMessage(std::function<void(const GreenMessage&)> callback) {
+    void subscribeToGreenMessage(GreenMessageCb callback) {
         std::unique_lock<std::mutex> lock(mtx);
         greenSubscribers.push_back(callback);
     }
 
-    void subscribeToBlueMessage(std::function<void(const BlueMessage&)> callback) {
+    void subscribeToBlueMessage(BlueMessageCb callback) {
         std::unique_lock<std::mutex> lock(mtx);
         blueSubscribers.push_back(callback);
     }
 
-    void subscribeToOrangeMessage(std::function<void(const OrangeMessage&)> callback) {
+    void subscribeToOrangeMessage(OrangeMessageCb callback) {
         std::unique_lock<std::mutex> lock(mtx);
         orangeSubscribers.push_back(callback);
     }
 
 private:
-    std::vector<std::function<void(const GreenMessage&)>> greenSubscribers;
-    std::vector<std::function<void(const BlueMessage&)>> blueSubscribers;
-    std::vector<std::function<void(const OrangeMessage&)>> orangeSubscribers;
+    std::vector<GreenMessageCb> greenSubscribers;
+    std::vector<BlueMessageCb> blueSubscribers;
+    std::vector<OrangeMessageCb> orangeSubscribers;
+    std::queue<OrangeMessage> orangeMessageQueue;
 
     std::mutex mtx;
+    std::condition_variable cv;
+    std::thread dispatchThread;
+    bool stop = false;
+
+    void dispatchOrangeMessages() {
+        while (true) {
+            std::unique_lock<std::mutex> lock(mtx);
+            cv.wait(lock, [this] { return !orangeMessageQueue.empty() || stop; });
+
+            if (stop && orangeMessageQueue.empty()) {
+                break;
+            }
+
+            OrangeMessage msg = orangeMessageQueue.front();
+            orangeMessageQueue.pop();
+            lock.unlock();
+
+            for (auto& subscriber : orangeSubscribers) {
+                subscriber(msg);
+            }
+        }
+    }
 };
 
 void generateGreenMessages(MessageDispatcher& dispatcher) {
