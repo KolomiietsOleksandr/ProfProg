@@ -41,15 +41,15 @@ public:
         for (size_t i = 0; i < rectangles.size(); ++i) {
             for (size_t j = 0; j < rectangles.size(); ++j) {
                 if (i != j && rectangles[i].canBePlacedInside(rectangles[j])) {
-                    std::cout << "Rectangle " << i + 1 << " can be placed inside Rectangle " << j + 1 << std::endl;
+                    std::println << "Rectangle " << i + 1 << " can be placed inside Rectangle " << j + 1 << std::endl;
                 }
             }
-            std::cout << "The biggest side of rectangle " << i + 1 << ": " << rectangles[i].getBiggerSide() << std::endl;
+            std::println << "The biggest side of rectangle " << i + 1 << ": " << rectangles[i].getBiggerSide() << std::endl;
         }
 
-        std::cout << "The biggest area: " << biggestArea << std::endl;
-        std::cout << "The smallest area: " << smallestArea << std::endl;
-        std::cout << "Total area of rectangles: " << totalArea << std::endl;
+        std::println << "The biggest area: " << biggestArea << std::endl;
+        std::println << "The smallest area: " << smallestArea << std::endl;
+        std::println << "Total area of rectangles: " << totalArea << std::endl;
     }
 
 private:
@@ -64,7 +64,7 @@ int main() {
 
     double width, height;
     for (int i = 1; i <= 5; ++i) {
-        std::cout << "Enter rectangle " << i << ":" << std::endl;
+        std::println << "Enter rectangle " << i << ":" << std::endl;
         if (std::cin >> width >> height) {
             processor.addRectangle(Rectangle(width, height));
         }
