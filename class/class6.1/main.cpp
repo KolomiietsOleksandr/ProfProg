@@ -32,54 +32,76 @@ public:
     using OrangeMessageCb = std::function<void(const OrangeMessage&)>;
 
     MessageDispatcher() {
-        dispatchThread = std::thread(&MessageDispatcher::dispatchOrangeMessages, this);
+        greenDispatchThread = std::thread(&MessageDispatcher::dispatchGreenMessages, this);
+        blueDispatchThread = std::thread(&MessageDispatcher::dispatchBlueMessages, this);
+        orangeDispatchThread = std::thread(&MessageDispatcher::dispatchOrangeMessages, this);
     }
 
     ~MessageDispatcher() {
         {
-            std::unique_lock<std::mutex> lock(mtx);
+            std::unique_lock<std::mutex> lock(greenMtx);
             stop = true;
         }
-        cv.notify_all();
-        if (dispatchThread.joinable()) {
-            dispatchThread.join();
+        greenCv.notify_all();
+        if (greenDispatchThread.joinable()) {
+            greenDispatchThread.join();
+        }
+
+        {
+            std::unique_lock<std::mutex> lock(blueMtx);
+            stop = true;
+        }
+        blueCv.notify_all();
+        if (blueDispatchThread.joinable()) {
+            blueDispatchThread.join();
+        }
+
+        {
+            std::unique_lock<std::mutex> lock(orangeMtx);
+            stop = true;
+        }
+        orangeCv.notify_all();
+        if (orangeDispatchThread.joinable()) {
+            orangeDispatchThread.join();
         }
     }
 
     void publishGreenMessage(const GreenMessage& msg) {
-        std::unique_lock<std::mutex> lock(mtx);
-        for (auto& subscriber : greenSubscribers) {
-            subscriber(msg);
+        {
+            std::unique_lock<std::mutex> lock(greenMtx);
+            greenMessageQueue.push(msg);
         }
+        greenCv.notify_one();
     }
 
     void publishBlueMessage(const BlueMessage& msg) {
-        std::unique_lock<std::mutex> lock(mtx);
-        for (auto& subscriber : blueSubscribers) {
-            subscriber(msg);
+        {
+            std::unique_lock<std::mutex> lock(blueMtx);
+            blueMessageQueue.push(msg);
         }
+        blueCv.notify_one();
     }
 
     void publishOrangeMessage(const OrangeMessage& msg) {
         {
-            std::unique_lock<std::mutex> lock(mtx);
+            std::unique_lock<std::mutex> lock(orangeMtx);
             orangeMessageQueue.push(msg);
         }
-        cv.notify_one();
+        orangeCv.notify_one();
     }
 
     void subscribeToGreenMessage(GreenMessageCb callback) {
-        std::unique_lock<std::mutex> lock(mtx);
+        std::unique_lock<std::mutex> lock(greenMtx);
         greenSubscribers.push_back(callback);
     }
 
     void subscribeToBlueMessage(BlueMessageCb callback) {
-        std::unique_lock<std::mutex> lock(mtx);
+        std::unique_lock<std::mutex> lock(blueMtx);
         blueSubscribers.push_back(callback);
     }
 
     void subscribeToOrangeMessage(OrangeMessageCb callback) {
-        std::unique_lock<std::mutex> lock(mtx);
+        std::unique_lock<std::mutex> lock(orangeMtx);
         orangeSubscribers.push_back(callback);
     }
 
@@ -87,17 +109,58 @@ private:
     std::vector<GreenMessageCb> greenSubscribers;
     std::vector<BlueMessageCb> blueSubscribers;
     std::vector<OrangeMessageCb> orangeSubscribers;
+
+    std::queue<GreenMessage> greenMessageQueue;
+    std::queue<BlueMessage> blueMessageQueue;
     std::queue<OrangeMessage> orangeMessageQueue;
 
-    std::mutex mtx;
-    std::condition_variable cv;
-    std::thread dispatchThread;
+    std::mutex greenMtx, blueMtx, orangeMtx;
+    std::condition_variable greenCv, blueCv, orangeCv;
+    std::thread greenDispatchThread, blueDispatchThread, orangeDispatchThread;
     bool stop = false;
+
+    void dispatchGreenMessages() {
+        while (true) {
+            std::unique_lock<std::mutex> lock(greenMtx);
+            greenCv.wait(lock, [this] { return !greenMessageQueue.empty() || stop; });
+
+            if (stop && greenMessageQueue.empty()) {
+                break;
+            }
+
+            GreenMessage msg = greenMessageQueue.front();
+            greenMessageQueue.pop();
+            lock.unlock();
+
+            for (auto& subscriber : greenSubscribers) {
+                subscriber(msg);
+            }
+        }
+    }
+
+    void dispatchBlueMessages() {
+        while (true) {
+            std::unique_lock<std::mutex> lock(blueMtx);
+            blueCv.wait(lock, [this] { return !blueMessageQueue.empty() || stop; });
+
+            if (stop && blueMessageQueue.empty()) {
+                break;
+            }
+
+            BlueMessage msg = blueMessageQueue.front();
+            blueMessageQueue.pop();
+            lock.unlock();
+
+            for (auto& subscriber : blueSubscribers) {
+                subscriber(msg);
+            }
+        }
+    }
 
     void dispatchOrangeMessages() {
         while (true) {
-            std::unique_lock<std::mutex> lock(mtx);
-            cv.wait(lock, [this] { return !orangeMessageQueue.empty() || stop; });
+            std::unique_lock<std::mutex> lock(orangeMtx);
+            orangeCv.wait(lock, [this] { return !orangeMessageQueue.empty() || stop; });
 
             if (stop && orangeMessageQueue.empty()) {
                 break;
